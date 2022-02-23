@@ -20,7 +20,7 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.html GNU General Public License v3.0
  *
  */
- 
+
 defined( 'ABSPATH' ) or exit;
 
 
@@ -32,7 +32,7 @@ if ( ! in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins',
 
 /**
  * Add the gateway to WC Available Gateways
- * 
+ *
  * @since 1.0.0
  * @param array $gateways all available WC gateways
  * @return array $gateways all WC gateways + cryptocurrencycheckout gateway
@@ -46,7 +46,7 @@ add_filter( 'woocommerce_payment_gateways', 'cryptocurrencycheckout_add_to_gatew
 
 /**
  * Adds plugin page links
- * 
+ *
  * @since 1.0.0
  * @param array $links all plugin links
  * @return array $links all plugin links + our custom links (i.e., "Settings")
@@ -65,7 +65,7 @@ add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'cryptocurrenc
 
 /**
  * CryptocurrencyCheckout Payment Gateway
- * Provides a Payment Gateway Connection to CryptocurrencyCheckout.com; where buyers can make payment in multiple Cryptocurrencies. 
+ * Provides a Payment Gateway Connection to CryptocurrencyCheckout.com; where buyers can make payment in multiple Cryptocurrencies.
  * We load it later to ensure WC is loaded first since we're extending it.
  *
  * @class 		CryptocurrencyCheckout_WC_Gateway
@@ -84,17 +84,17 @@ function cryptocurrencycheckout_gateway_init() {
 		 * Constructor for the gateway.
 		 */
 		public function __construct() {
-	  
+
 			$this->id                 = 'cryptocurrencycheckout_gateway';
 			$this->icon               = apply_filters('woocommerce_cryptocurrencycheckout_icon', '');
 			$this->has_fields         = false;
 			$this->method_title       = __( 'CryptocurrencyCheckout', 'cryptocurrencycheckout-wc-gateway' );
 			$this->method_description = __( 'Connects your WooCommerce Store Checkout to the CryptocurrencyCheckout Payment Gateway so you can start accepting Cryptocurrencies like Bitcoin, Ethereum, Dash, Litecoin and more for free.', 'cryptocurrencycheckout-wc-gateway' );
-		  
+
 			// Load the settings.
 			$this->init_form_fields();
 			$this->init_settings();
-		  
+
 			// Define user set variables
 			$this->title 			= $this->get_option( 'title' );
 			$this->redirect 		= $this->get_option( 'redirect' );
@@ -111,6 +111,7 @@ function cryptocurrencycheckout_gateway_init() {
 			$this->ltcAddress 		= $this->get_option( 'ltcAddress' );
 			$this->dashAddress 		= $this->get_option( 'dashAddress' );
 			$this->sendAddress 		= $this->get_option( 'sendAddress' );
+      $this->cdsAddress 		= $this->get_option( 'cdsAddress' );
 			$this->cdzcAddress 		= $this->get_option( 'cdzcAddress' );
 			$this->arrrAddress 		= $this->get_option( 'arrrAddress' );
 			$this->colxAddress 		= $this->get_option( 'colxAddress' );
@@ -179,25 +180,25 @@ function cryptocurrencycheckout_gateway_init() {
 			$this->gthAddress 		= $this->get_option( 'gthAddress' );
 			$this->hnsAddress 		= $this->get_option( 'hnsAddress' );
 			$this->rtmAddress 		= $this->get_option( 'rtmAddress' );
-		  
+
 			// Actions
 			add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
 			add_action( 'woocommerce_thankyou_' . $this->id, array( $this, 'thankyou_page' ) );
-		  
+
 			// Customer Emails
 			add_action( 'woocommerce_email_before_order_table', array( $this, 'email_instructions' ), 10, 3 );
 		}
 
-		
-	
+
+
 		/**
 		 * Initialize Gateway Settings Form Fields
 		 * This is where the Store will enter all of their CryptocurrencyCheckout Settings.
 		 */
 		public function init_form_fields() {
-	  
+
 			$this->form_fields = apply_filters( 'cryptocurrencycheckout_form_fields', array(
-		  
+
 				'enabled' => array(
 					'title'   => __( 'Enable/Disable:', 'cryptocurrencycheckout-wc-gateway' ),
 					'type'    => 'checkbox',
@@ -234,7 +235,7 @@ function cryptocurrencycheckout_gateway_init() {
 					'default'     => __( 'CryptocurrencyCheckout', 'cryptocurrencycheckout-wc-gateway' ),
 					'desc_tip'    => true,
 				),
-				
+
 				'payNow' => array(
 					'title'       => __( 'Pay Now Button Text:', 'cryptocurrencycheckout-wc-gateway' ),
 					'type'        => 'text',
@@ -243,7 +244,7 @@ function cryptocurrencycheckout_gateway_init() {
 					'desc_tip'    => true,
 				),
 
-				
+
 				'StoreName' => array(
 					'title'       => __( 'Unique Store Identifier:', 'cryptocurrencycheckout-wc-gateway' ),
 					'type'        => 'text',
@@ -251,7 +252,7 @@ function cryptocurrencycheckout_gateway_init() {
 					'default'     => __( '', 'cryptocurrencycheckout-wc-gateway' ),
 					'desc_tip'    => true,
 				),
-				
+
 				'StoreID' => array(
 					'title'       => __( 'Store ID:', 'cryptocurrencycheckout-wc-gateway' ),
 					'type'        => 'text',
@@ -304,6 +305,14 @@ function cryptocurrencycheckout_gateway_init() {
 					'title'       => __( 'SEND Address:', 'cryptocurrencycheckout-wc-gateway' ),
 					'type'        => 'text',
 					'description' => __( 'Enter your Social Send Address, must match the address input in CryptocurrencyCheckout Dashboard Connection.' ),
+					'default'     => __( '', 'cryptocurrencycheckout-wc-gateway' ),
+					'desc_tip'    => true,
+				),
+
+        'cdsAddress' => array(
+					'title'       => __( 'CDS Address:', 'cryptocurrencycheckout-wc-gateway' ),
+					'type'        => 'text',
+					'description' => __( 'Enter your CryptoDevelopmentServices Address, must match the address input in CryptocurrencyCheckout Dashboard Connection.' ),
 					'default'     => __( '', 'cryptocurrencycheckout-wc-gateway' ),
 					'desc_tip'    => true,
 				),
@@ -860,11 +869,11 @@ function cryptocurrencycheckout_gateway_init() {
 					'desc_tip'    => true,
 				),
 
-				
+
 			) );
 		}
-	
-	
+
+
 		/**
 		 * Output for the order received page.
 		 */
@@ -961,7 +970,7 @@ function cryptocurrencycheckout_gateway_init() {
 			if ( $this->redirect == 'yes' ) {
 			wc_enqueue_js( 'jQuery( "#submit-form" ).click();' );
 			}
-			
+
 			// Display Payment Button to Customer, clicking this button will HTTP POST and pass the customer to the CryptocurrencyCheckout Payment Gateway.
 			$htmlOutput = '<form method="POST" action="' . $url . '">';
 			foreach ($postfields as $k => $v) {
@@ -973,9 +982,9 @@ function cryptocurrencycheckout_gateway_init() {
 			}
 			$htmlOutput .= '<input type="submit" id="submit-form" value="' . $this->payNow . '">';
 			$htmlOutput .= '</form>';
-			
+
 			echo $htmlOutput;
-			
+
 		}
 
 
@@ -992,7 +1001,7 @@ function cryptocurrencycheckout_gateway_init() {
 
 		public function email_instructions( $order, $sent_to_admin, $plain_text = false ) {
 
-			
+
 			if ($this->emailButton === 'yes' && ! $sent_to_admin && $this->id === $order->get_payment_method() && $order->has_status('on-hold')) {
 
 				// POST Fields
@@ -1079,8 +1088,8 @@ function cryptocurrencycheckout_gateway_init() {
 				$postfields['GTH'] = $this->gthAddress;
 				$postfields['HNS'] = $this->hnsAddress;
 				$postfields['RTM'] = $this->rtmAddress;
-				
-	
+
+
 				$htmlOutput ='<div style="padding-top: 20px; padding-bottom: 20px;">';
 				$htmlOutput .= '' . $this->Instructions . '<br><br>';
 				$htmlOutput .= '<a href="' . $url . '?AI=' . $api . '';
@@ -1096,14 +1105,14 @@ function cryptocurrencycheckout_gateway_init() {
 				$htmlOutput .= '" >';
 				$htmlOutput .= '<button style="background-color: #007bff; color: white; font-size: 16px; padding: 8px 20px; border-radius: 6px;">'. $this->payNow .'</button>';
 				$htmlOutput .= '</a></div>';
-	
+
 				echo $htmlOutput;
 
 			}
-			
+
 		}
-	
-	
+
+
 		/**
 		 * Process the payment and return the result
 		 * This will put the order into on-hold status, reduce inventory levels, and empty customer shopping cart.
@@ -1112,24 +1121,24 @@ function cryptocurrencycheckout_gateway_init() {
 		 * @return array
 		 */
 		public function process_payment( $order_id ) {
-	
+
 			$order = wc_get_order( $order_id );
-			
+
 			// Mark as on-hold (we're awaiting the payment)
 			$order->update_status( 'on-hold', __( 'Awaiting cryptocurrencycheckout payment', 'cryptocurrencycheckout-wc-gateway' ) );
-			
+
 			// Reduce stock levels
 			wc_reduce_stock_levels($order_id);
-			
+
 			// Remove cart
 			WC()->cart->empty_cart();
-			
+
 			// Return thankyou redirect
 			return array(
 				'result' 	=> 'success',
 				'redirect'	=> $this->get_return_url( $order )
 			);
 		}
-	
+
   } // end \CryptocurrencyCheckout_WC_Gateway class
 }
